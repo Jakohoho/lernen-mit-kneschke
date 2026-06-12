@@ -33,6 +33,7 @@ export function mount(container, context) {
 
   // ---- Spielzustand ---------------------------------------------------
   let modus = 'solo';            // 'solo' | 'multi'
+  let hardcore = false;          // true = Antwort frei eintippen statt auswählen
   let spieler = [];              // { name, farbe, pos, imZiel, richtig, falsch, aussetzen }
   let besitzer = new Map();      // Feld-Index -> Spieler-Index (nur Multi)
   let aktiverIdx = -1;
@@ -61,6 +62,10 @@ export function mount(container, context) {
             <span class="spr-modus-info">2–4 Spieler würfeln und erobern Felder – wer holt die meisten?</span>
           </button>
         </div>
+        <label class="spr-hardcore">
+          <input type="checkbox" data-hardcore ${hardcore ? 'checked' : ''}>
+          <span>🔥 <strong>Hardcore-Modus:</strong> Antwort selbst eintippen statt auswählen</span>
+        </label>
         <div class="spr-regeln">
           <h3>📜 So geht's</h3>
           <ul>
@@ -71,6 +76,9 @@ export function mount(container, context) {
         </div>
       </div>
     `;
+    container.querySelector('[data-hardcore]').addEventListener('change', (e) => {
+      hardcore = e.target.checked;
+    });
     container.querySelector('[data-modus="solo"]').addEventListener('click', () => {
       modus = 'solo';
       starteSpiel([{ name: 'Du', farbe: SPIELER_FARBEN[0] }]);
@@ -367,6 +375,19 @@ export function mount(container, context) {
     const feld = FELDER[feldIndex];
     const satzHtml = feld.satz.replace('___', '<span class="spr-luecke">______</span>');
 
+    const antwortBereich = hardcore
+      ? `
+        <form class="spr-eingabe" autocomplete="off">
+          <input type="text" class="spr-eingabe-feld" lang="en" autocapitalize="none"
+                 autocorrect="off" spellcheck="false" enterkeyhint="done"
+                 placeholder="Antwort eintippen …" aria-label="Antwort">
+          <button type="submit" class="knopf knopf--koralle">Prüfen</button>
+        </form>`
+      : `
+        <div class="spr-antworten">
+          ${PRONOMEN.map((p) => `<button type="button" class="spr-antwort" data-antwort="${p}" lang="en">${p}</button>`).join('')}
+        </div>`;
+
     aktionEl.innerHTML = `
       <div class="spr-panel">
         <p class="spr-zug-info">
@@ -374,52 +395,73 @@ export function mount(container, context) {
           <strong>${s.name}</strong> · Feld ${feld.nr} ${feld.emoji}
         </p>
         <p class="spr-satz" lang="en">${satzHtml}</p>
-        <div class="spr-antworten">
-          ${PRONOMEN.map((p) => `<button type="button" class="spr-antwort" data-antwort="${p}" lang="en">${p}</button>`).join('')}
-        </div>
+        ${antwortBereich}
         <div class="spr-feedback" aria-live="polite"></div>
       </div>
     `;
 
     const feedbackEl = aktionEl.querySelector('.spr-feedback');
-    aktionEl.querySelectorAll('.spr-antwort').forEach((knopf) => {
-      knopf.addEventListener('click', () => {
-        const gewaehlt = knopf.dataset.antwort;
-        const korrekt = gewaehlt === feld.antwort;
 
-        // Alle Knöpfe sperren, Lösung markieren
-        aktionEl.querySelectorAll('.spr-antwort').forEach((k) => {
-          k.disabled = true;
-          if (k.dataset.antwort === feld.antwort) k.classList.add('spr-antwort--richtig');
-          else if (k === knopf) k.classList.add('spr-antwort--falsch');
-        });
-        aktionEl.querySelector('.spr-luecke').textContent = feld.antwort;
+    // Gemeinsame Auswertung für beide Antwortarten (Knöpfe & Freitext).
+    function werteAntwortAus(korrekt) {
+      aktionEl.querySelector('.spr-luecke').textContent = feld.antwort;
 
-        if (korrekt) {
-          s.richtig += 1;
-          if (modus === 'multi') {
-            besitzer.set(feldIndex, spieler.indexOf(s));
-            aktualisiereBrett();
-          }
-        } else {
-          s.falsch += 1;
+      if (korrekt) {
+        s.richtig += 1;
+        if (modus === 'multi') {
+          besitzer.set(feldIndex, spieler.indexOf(s));
+          aktualisiereBrett();
         }
-        aktualisiereStatus();
+      } else {
+        s.falsch += 1;
+      }
+      aktualisiereStatus();
 
-        feedbackEl.innerHTML = `
-          <p class="spr-feedback-text ${korrekt ? 'spr-feedback-text--gruen' : 'spr-feedback-text--rot'}">
-            ${korrekt
-              ? `✅ Richtig!${modus === 'multi' ? ' Das Feld gehört jetzt dir!' : ''}`
-              : `❌ Leider falsch – richtig ist „${feld.antwort}".`}
-          </p>
-          <button type="button" class="knopf knopf--minze" data-weiter>Weiter ➜</button>
-        `;
-        feedbackEl.querySelector('[data-weiter]').addEventListener('click', () => {
-          if (modus === 'solo') soloZug();
-          else naechsterZug();
-        }, { once: true });
+      feedbackEl.innerHTML = `
+        <p class="spr-feedback-text ${korrekt ? 'spr-feedback-text--gruen' : 'spr-feedback-text--rot'}">
+          ${korrekt
+            ? `✅ Richtig!${modus === 'multi' ? ' Das Feld gehört jetzt dir!' : ''}`
+            : `❌ Leider falsch – richtig ist „${feld.antwort}".`}
+        </p>
+        <button type="button" class="knopf knopf--minze" data-weiter>Weiter ➜</button>
+      `;
+      feedbackEl.querySelector('[data-weiter]').addEventListener('click', () => {
+        if (modus === 'solo') soloZug();
+        else naechsterZug();
       }, { once: true });
-    });
+    }
+
+    if (hardcore) {
+      const form = aktionEl.querySelector('.spr-eingabe');
+      const input = form.querySelector('.spr-eingabe-feld');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const eingabe = input.value.trim();
+        if (!eingabe) return; // leere Eingabe ignorieren
+
+        const korrekt = eingabe.toLowerCase() === feld.antwort.toLowerCase();
+        input.disabled = true;
+        form.querySelector('button').disabled = true;
+        input.classList.add(korrekt ? 'spr-eingabe-feld--richtig' : 'spr-eingabe-feld--falsch');
+        werteAntwortAus(korrekt);
+      });
+      input.focus();
+    } else {
+      aktionEl.querySelectorAll('.spr-antwort').forEach((knopf) => {
+        knopf.addEventListener('click', () => {
+          const gewaehlt = knopf.dataset.antwort;
+          const korrekt = gewaehlt === feld.antwort;
+
+          // Alle Knöpfe sperren, Lösung markieren
+          aktionEl.querySelectorAll('.spr-antwort').forEach((k) => {
+            k.disabled = true;
+            if (k.dataset.antwort === feld.antwort) k.classList.add('spr-antwort--richtig');
+            else if (k === knopf) k.classList.add('spr-antwort--falsch');
+          });
+          werteAntwortAus(korrekt);
+        }, { once: true });
+      });
+    }
   }
 
   function zeigeNachricht(text, weiter, knopfText = 'Weiter ➜') {

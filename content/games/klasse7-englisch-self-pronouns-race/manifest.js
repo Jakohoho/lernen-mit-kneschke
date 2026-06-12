@@ -11,6 +11,8 @@ export default {
   klasse: 7,
   fach: 'englisch',
   kategorie: 'grammatik',
+  /** false = Spiel ist für Schüler unsichtbar (siehe docs/apps-deaktivieren.md). */
+  aktiv: true,
   /** Spielmodul erst laden, wenn das Spiel geöffnet wird. */
   laden: () => import('./game.js'),
   /** Spiel-eigenes Stylesheet (lädt und entfernt der gameHost). */

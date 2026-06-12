@@ -48,6 +48,30 @@
 .spr-modus-name { font-family: var(--schrift-display); font-weight: 800; font-size: 1.25rem; }
 .spr-modus-info { font-size: 0.85rem; color: var(--tinte-soft); font-weight: 600; }
 
+.spr-hardcore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: 14px;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1.25rem;
+  box-shadow: var(--schatten);
+  cursor: pointer;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.spr-hardcore input {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+  accent-color: var(--koralle);
+  cursor: pointer;
+}
+
 .spr-regeln {
   text-align: left;
   background: var(--gelb-sanft);
@@ -371,6 +395,30 @@
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
 }
+
+/* Freitext-Eingabe (Hardcore-Modus) */
+.spr-eingabe {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.spr-eingabe-feld {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.8rem;
+  font-family: var(--schrift-text);
+  font-size: 1rem; /* mind. 16px – verhindert Auto-Zoom auf iOS */
+  font-weight: 800;
+  color: var(--tinte);
+  background: var(--papier);
+  border: 2px solid var(--tinte);
+  border-radius: 12px;
+}
+
+.spr-eingabe-feld:focus { outline: 3px solid var(--himmel); outline-offset: 2px; }
+.spr-eingabe-feld:disabled { opacity: 0.9; }
+.spr-eingabe-feld--richtig { background: var(--minze) !important; color: #fff; opacity: 1 !important; }
+.spr-eingabe-feld--falsch { background: var(--koralle) !important; color: #fff; opacity: 1 !important; animation: spr-schuetteln 0.35s ease; }
 
 .spr-feedback-text { font-weight: 800; margin: 0.7em 0 0.6em; }
 .spr-feedback-text--gruen { color: var(--minze-tief); }
