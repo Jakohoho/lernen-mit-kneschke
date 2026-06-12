@@ -1,0 +1,154 @@
+/* ============================================================
+   Lernen mit Kneschke — Basis-Styles
+   Design: „Spieleschachtel" — warmes Papier, dicke Konturen,
+   harte Offset-Schatten, Konfetti-Farben. Mobile first.
+   ============================================================ */
+
+:root {
+  /* Farben */
+  --papier: #FDF6E9;
+  --papier-tief: #F5E9D2;
+  --karte: #FFFFFF;
+  --tinte: #322E2B;
+  --tinte-soft: #7A7066;
+  --koralle: #FF6B57;
+  --koralle-tief: #E84F3B;
+  --sonne: #FFC53D;
+  --minze: #2EC4A6;
+  --minze-tief: #189B82;
+  --himmel: #3FA7E0;
+  --himmel-tief: #2683B8;
+  --beere: #C76FCB;
+  --gras: #8BC34A;
+  --rot-sanft: #FFE3DE;
+  --gruen-sanft: #DDF5EC;
+  --gelb-sanft: #FFF3D6;
+  --blau-sanft: #E0F1FB;
+
+  /* Form */
+  --radius: 18px;
+  --radius-gross: 26px;
+  --kontur: 2.5px solid var(--tinte);
+  --schatten: 0.25rem 0.25rem 0 rgba(50, 46, 43, 0.18);
+  --schatten-hart: 0.3rem 0.3rem 0 var(--tinte);
+
+  /* Schrift */
+  --schrift-display: "Baloo 2", "Comic Sans MS", cursive;
+  --schrift-text: "Nunito", "Segoe UI", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--schrift-text);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--tinte);
+  background-color: var(--papier);
+  /* Konfetti-Punkte im Hintergrund */
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 107, 87, 0.12) 0 0.5rem, transparent 0.55rem),
+    radial-gradient(circle at 78% 9%, rgba(63, 167, 224, 0.12) 0 0.4rem, transparent 0.45rem),
+    radial-gradient(circle at 90% 65%, rgba(255, 197, 61, 0.16) 0 0.45rem, transparent 0.5rem),
+    radial-gradient(circle at 25% 85%, rgba(46, 196, 166, 0.12) 0 0.5rem, transparent 0.55rem),
+    radial-gradient(circle at 55% 40%, rgba(199, 111, 203, 0.08) 0 0.6rem, transparent 0.65rem);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--schrift-display);
+  line-height: 1.15;
+  margin: 0 0 0.4em;
+  letter-spacing: 0.01em;
+}
+
+p { margin: 0 0 1em; }
+a { color: var(--himmel-tief); }
+button { font-family: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--himmel);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- Kopfzeile ---------- */
+
+.kopf {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  background: rgba(253, 246, 233, 0.92);
+  backdrop-filter: blur(6px);
+  border-bottom: var(--kontur);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--tinte);
+  font-family: var(--schrift-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.logo-wuerfel {
+  font-size: 1.5rem;
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo:hover .logo-wuerfel { transform: rotate(-20deg) scale(1.15); }
+
+.logo-text em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--koralle-tief);
+}
+
+/* ---------- Hauptbereich & Fußzeile ---------- */
+
+.app {
+  flex: 1;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.fuss {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: var(--tinte-soft);
+  border-top: 2px dashed rgba(50, 46, 43, 0.2);
+}
+
+.fuss p { margin: 0; }
+
+@media (min-width: 720px) {
+  .app { padding: 2rem 1.5rem 4rem; }
+  .logo { font-size: 1.5rem; }
+}
+
+/* Weniger Bewegung, wenn gewünscht */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
