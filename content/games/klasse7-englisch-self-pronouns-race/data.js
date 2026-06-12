@@ -24,7 +24,7 @@ export const FELDER = [
   { typ: 'frage', nr: 5, satz: 'The cat cleaned ___.', antwort: 'itself', emoji: '🐱' },
   { typ: 'frage', nr: 6, satz: 'We drove to the lake by ___.', antwort: 'ourselves', emoji: '🚗' },
   { typ: 'frage', nr: 7, satz: 'They introduced ___ to the class.', antwort: 'themselves', emoji: '👋' },
-  { typ: 'frage', nr: 8, satz: 'My sister taught ___ French.', antwort: 'herself', emoji: '🇫🇷' },
+  { typ: 'frage', nr: 8, satz: 'My sister taught ___ French.', antwort: 'herself', emoji: '🥐' },
   { typ: 'frage', nr: 9, satz: 'The children dressed ___.', antwort: 'themselves', emoji: '🧒' },
   { typ: 'frage', nr: 10, satz: 'We painted the room ___.', antwort: 'ourselves', emoji: '🖌️' },
   { typ: 'spezial', effekt: 2, label: '2 Felder vor!', emoji: '⏩' },

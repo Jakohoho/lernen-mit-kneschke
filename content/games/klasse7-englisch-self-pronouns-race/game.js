@@ -65,7 +65,7 @@ export function mount(container, context) {
           <h3>📜 So geht's</h3>
           <ul>
             <li>Auf jedem Feld wartet ein Lückensatz – wähle das passende Reflexivpronomen.</li>
-            <li>Ereignisfelder lassen dich springen (⏩ / ⏪) oder aussetzen (😞).</li>
+            <li>Ereignisfelder lassen dich springen (⏩ / ⏪) oder aussetzen (😞) – im Übungsmodus sind sie nur eine Schrecksekunde.</li>
             <li>Im Mehrspielermodus gewinnst du Felder mit richtigen Antworten. Besetzte Felder überspringst du.</li>
           </ul>
         </div>
@@ -333,14 +333,14 @@ export function mount(container, context) {
     }
 
     if (feld.typ === 'spezial') {
-      if (feld.effekt === 'aussetzen') {
-        if (modus === 'solo') {
-          // Solo geht es trotzdem weiter – nur eine kleine Schrecksekunde.
-          zeigeNachricht(`${feld.emoji} Uff, ein Aussetzen-Feld! Zum Glück übst du nur – weiter geht's.`, soloZug);
-        } else {
-          s.aussetzen = true;
-          zeigeNachricht(`${feld.emoji} ${s.name} landet auf „Aussetzen" und pausiert nächste Runde.`, naechsterZug);
-        }
+      if (modus === 'solo') {
+        // Beim Üben sind Ereignisfelder nur eine Schrecksekunde: Würde
+        // „zurück" wirken, käme man Feld für Feld nie am Feld vorbei
+        // (Endlosschleife) – und „vor" würde Fragen überspringen.
+        zeigeNachricht(`${feld.emoji} ${feld.label} Zum Glück übst du nur – es geht normal weiter.`, soloZug);
+      } else if (feld.effekt === 'aussetzen') {
+        s.aussetzen = true;
+        zeigeNachricht(`${feld.emoji} ${s.name} landet auf „Aussetzen" und pausiert nächste Runde.`, naechsterZug);
       } else {
         const richtung = feld.effekt > 0 ? 'vor' : 'zurück';
         zeigeNachricht(`${feld.emoji} ${feld.label} ${s.name} springt ${Math.abs(feld.effekt)} Felder ${richtung}.`,
