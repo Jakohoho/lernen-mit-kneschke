@@ -1,0 +1,435 @@
+/* ============================================================
+   Conditionals Race — Spiel-Styles
+   (lädt der gameHost nur, solange das Spiel offen ist)
+   ============================================================ */
+
+/* ---------- Intro / Modus-Auswahl ---------- */
+
+.cr-intro {
+  max-width: 34rem;
+  margin: 0 auto;
+  text-align: center;
+  animation: auftauchen 0.45s ease both;
+}
+
+.cr-titel { font-size: clamp(1.7rem, 6vw, 2.4rem); margin-bottom: 0.2em; }
+.cr-untertitel { color: var(--tinte-soft); font-weight: 700; }
+
+.cr-modi {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.5rem 0;
+}
+
+@media (min-width: 540px) {
+  .cr-modi { grid-template-columns: 1fr 1fr; }
+}
+
+.cr-modus-karte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 1.3rem 1rem;
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: var(--radius);
+  box-shadow: var(--schatten-hart);
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+}
+
+.cr-modus-karte:hover, .cr-modus-karte:focus-visible {
+  transform: translate(-3px, -3px) rotate(-0.6deg);
+  box-shadow: 0.55rem 0.55rem 0 var(--tinte);
+}
+
+.cr-modus-emoji { font-size: 2.6rem; line-height: 1; }
+.cr-modus-name { font-family: var(--schrift-display); font-weight: 800; font-size: 1.25rem; }
+.cr-modus-info { font-size: 0.85rem; color: var(--tinte-soft); font-weight: 600; }
+
+.cr-hardcore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: 14px;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1.25rem;
+  box-shadow: var(--schatten);
+  cursor: pointer;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.cr-hardcore input {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+  accent-color: var(--koralle);
+  cursor: pointer;
+}
+
+.cr-regeln {
+  text-align: left;
+  background: var(--gelb-sanft);
+  border: var(--kontur);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: 0.92rem;
+}
+
+.cr-regeln h3 { margin-bottom: 0.3em; font-size: 1.05rem; }
+.cr-regeln ul { margin: 0; padding-left: 1.2rem; }
+.cr-regeln li { margin-bottom: 0.3em; }
+
+/* ---------- Mehrspieler-Setup ---------- */
+
+.cr-anzahl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+}
+
+.cr-anzahl-knopf {
+  width: 3rem;
+  height: 3rem;
+  font-family: var(--schrift-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--tinte);
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: 14px;
+  box-shadow: var(--schatten);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.cr-anzahl-knopf--aktiv {
+  background: var(--sonne);
+  box-shadow: var(--schatten-hart);
+  transform: translate(-2px, -2px);
+}
+
+.cr-anzahl-label { font-weight: 800; }
+
+.cr-namen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+}
+
+.cr-name-feld {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: 14px;
+  padding: 0.45rem 0.9rem;
+  box-shadow: var(--schatten);
+}
+
+.cr-name-feld input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--schrift-text);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--tinte);
+}
+
+.cr-name-feld input:focus { outline: none; }
+.cr-name-feld:focus-within { outline: 3px solid var(--himmel); outline-offset: 2px; }
+
+.cr-zurueck-link {
+  display: block;
+  margin: 0.9rem auto 0;
+  background: none;
+  border: none;
+  color: var(--tinte-soft);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---------- Spielansicht ---------- */
+
+.cr-spiel { animation: auftauchen 0.4s ease both; }
+
+.cr-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+}
+
+.cr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  box-shadow: var(--schatten);
+}
+
+.cr-chip--gruen { background: var(--gruen-sanft); }
+.cr-chip--rot { background: var(--rot-sanft); }
+
+.cr-spieler-chip--aktiv {
+  background: var(--gelb-sanft);
+  transform: scale(1.06);
+  box-shadow: var(--schatten-hart);
+}
+
+/* ---------- Das Brett ---------- */
+
+.cr-brett {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  background: var(--papier-tief);
+  border: var(--kontur);
+  border-radius: var(--radius-gross);
+  box-shadow: var(--schatten-hart);
+}
+
+.cr-feld {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  background: var(--karte);
+  border: 2px solid var(--tinte);
+  border-radius: 12px;
+  padding: 0.2rem;
+  text-align: center;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.cr-feld-nr {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.3rem;
+  font-family: var(--schrift-display);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--tinte-soft);
+}
+
+.cr-feld-emoji { font-size: clamp(1.1rem, 4.5vw, 1.7rem); line-height: 1.1; }
+
+.cr-feld-label {
+  font-family: var(--schrift-display);
+  font-size: 0.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.cr-feld--start { background: var(--gruen-sanft); }
+.cr-feld--ziel { background: var(--gelb-sanft); }
+.cr-feld--spezial { background: var(--blau-sanft); border-style: dashed; }
+
+.cr-feld--aktiv {
+  transform: scale(1.08);
+  z-index: 2;
+  box-shadow: 0 0 0 3px var(--sonne), 0.2rem 0.2rem 0 rgba(50, 46, 43, 0.25);
+  animation: cr-puls 1.4s ease infinite;
+}
+
+@keyframes cr-puls {
+  0%, 100% { box-shadow: 0 0 0 3px var(--sonne), 0.2rem 0.2rem 0 rgba(50, 46, 43, 0.25); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 197, 61, 0.55), 0.2rem 0.2rem 0 rgba(50, 46, 43, 0.25); }
+}
+
+.cr-tokens {
+  position: absolute;
+  bottom: 0.15rem;
+  display: flex;
+  gap: 0.12rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cr-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid var(--tinte);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  font-family: var(--schrift-display);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  animation: cr-token-rein 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cr-token-rein {
+  from { transform: scale(0) translateY(-0.5rem); }
+  to { transform: none; }
+}
+
+/* ---------- Aktionsbereich (klebt unten am Bildschirm) ---------- */
+
+.cr-aktion {
+  position: sticky;
+  bottom: 0.6rem;
+  z-index: 10;
+  margin-top: 1rem;
+}
+
+.cr-panel {
+  background: var(--karte);
+  border: var(--kontur);
+  border-radius: var(--radius-gross);
+  box-shadow: var(--schatten-hart);
+  padding: 1rem 1.1rem;
+  text-align: center;
+  animation: cr-panel-rein 0.3s ease both;
+}
+
+@keyframes cr-panel-rein {
+  from { opacity: 0; transform: translateY(0.8rem); }
+  to { opacity: 1; transform: none; }
+}
+
+.cr-zug-info { margin: 0 0 0.5em; font-size: 0.95rem; }
+.cr-nachricht { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.8em; }
+.cr-hinweis { margin: 0.4em 0 0; font-size: 0.85rem; color: var(--tinte-soft); font-weight: 700; }
+
+/* Würfel */
+.cr-wuerfel {
+  font-size: 3.2rem;
+  line-height: 1;
+  background: var(--gelb-sanft);
+  border: var(--kontur);
+  border-radius: 18px;
+  width: 5rem;
+  height: 5rem;
+  cursor: pointer;
+  box-shadow: var(--schatten-hart);
+  transition: transform 0.15s ease;
+}
+
+.cr-wuerfel:hover:not(:disabled) { transform: translate(-2px, -2px) rotate(-6deg); }
+.cr-wuerfel--rollt { animation: cr-wackeln 0.45s ease infinite; }
+
+@keyframes cr-wackeln {
+  0%, 100% { transform: rotate(-12deg) scale(1.05); }
+  50% { transform: rotate(12deg) scale(1.1); }
+}
+
+/* Frage */
+.cr-satz {
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.45;
+  margin: 0.2em 0 0.8em;
+}
+
+.cr-luecke {
+  display: inline-block;
+  min-width: 4.5rem;
+  border-bottom: 3px solid var(--koralle);
+  color: var(--koralle-tief);
+  font-weight: 800;
+}
+
+.cr-antworten {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+}
+
+@media (min-width: 480px) {
+  .cr-antworten { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cr-antwort {
+  padding: 0.6rem 0.5rem;
+  font-family: var(--schrift-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--tinte);
+  background: var(--papier);
+  border: 2px solid var(--tinte);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.2s ease;
+  touch-action: manipulation;
+}
+
+.cr-antwort:hover:not(:disabled) { background: var(--gelb-sanft); transform: translateY(-2px); }
+.cr-antwort:disabled { cursor: default; opacity: 0.75; }
+.cr-antwort--richtig { background: var(--minze) !important; color: #fff; opacity: 1 !important; }
+.cr-antwort--falsch { background: var(--koralle) !important; color: #fff; opacity: 1 !important; animation: cr-schuetteln 0.35s ease; }
+
+@keyframes cr-schuetteln {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Freitext-Eingabe (Hardcore-Modus) */
+.cr-eingabe {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.cr-eingabe-feld {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.8rem;
+  font-family: var(--schrift-text);
+  font-size: 1rem; /* mind. 16px – verhindert Auto-Zoom auf iOS */
+  font-weight: 800;
+  color: var(--tinte);
+  background: var(--papier);
+  border: 2px solid var(--tinte);
+  border-radius: 12px;
+}
+
+.cr-eingabe-feld:focus { outline: 3px solid var(--himmel); outline-offset: 2px; }
+.cr-eingabe-feld:disabled { opacity: 0.9; }
+.cr-eingabe-feld--richtig { background: var(--minze) !important; color: #fff; opacity: 1 !important; }
+.cr-eingabe-feld--falsch { background: var(--koralle) !important; color: #fff; opacity: 1 !important; animation: cr-schuetteln 0.35s ease; }
+
+.cr-feedback-text { font-weight: 800; margin: 0.7em 0 0.6em; }
+.cr-feedback-text--gruen { color: var(--minze-tief); }
+.cr-feedback-text--rot { color: var(--koralle-tief); }
+
+/* Conditional-Typ-Verraten (erst nach dem Antworten) */
+.cr-typ {
+  display: inline-block;
+  margin-left: 0.3em;
+  padding: 0.05em 0.55em;
+  border-radius: 999px;
+  background: var(--blau-sanft);
+  border: 2px solid var(--tinte);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--tinte);
+  vertical-align: middle;
+}

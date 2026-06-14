@@ -80,3 +80,4 @@ Dann im Browser öffnen: `http://localhost:8000`
 | Spiel | Klasse | Fach | Kategorie | Besonderheiten |
 | --- | --- | --- | --- | --- |
 | 🏁 Self-Pronouns Race | 7 | Englisch | Grammatik | 🔥 Hardcore-Modus (Antwort frei eintippen) |
+| 🏎️ Conditionals Race | 8 | Englisch | Grammatik | If-Sätze Typ 1/2/3, Satz-Pool (Felder wechseln), falsch = zurück · 🔥 Hardcore-Modus |

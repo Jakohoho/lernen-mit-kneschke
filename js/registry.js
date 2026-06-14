@@ -9,6 +9,7 @@
  * 👉 Anleitung: docs/neues-spiel.md
  */
 import selfPronounsRace from '../content/games/klasse7-englisch-self-pronouns-race/manifest.js';
+import conditionalsRace from '../content/games/klasse8-englisch-conditionals-race/manifest.js';
 
 /**
  * Alle registrierten Spiele (Manifeste) – auch deaktivierte!
@@ -18,6 +19,7 @@ import selfPronounsRace from '../content/games/klasse7-englisch-self-pronouns-ra
  */
 export const SPIELE = [
   selfPronounsRace,
+  conditionalsRace,
 ];
 
 /**
