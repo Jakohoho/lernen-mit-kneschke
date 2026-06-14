@@ -10,6 +10,7 @@
  */
 import selfPronounsRace from '../content/games/klasse7-englisch-self-pronouns-race/manifest.js';
 import conditionalsRace from '../content/games/klasse8-englisch-conditionals-race/manifest.js';
+import reflexivesEachOther from '../content/games/klasse7-englisch-reflexives-each-other/manifest.js';
 
 /**
  * Alle registrierten Spiele (Manifeste) – auch deaktivierte!
@@ -20,6 +21,7 @@ import conditionalsRace from '../content/games/klasse8-englisch-conditionals-rac
 export const SPIELE = [
   selfPronounsRace,
   conditionalsRace,
+  reflexivesEachOther,
 ];
 
 /**
