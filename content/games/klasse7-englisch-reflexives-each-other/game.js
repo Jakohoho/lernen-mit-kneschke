@@ -15,7 +15,7 @@
  *
  * Modi: Antworten auswählen (Standard) oder 🔥 Hardcore (frei eintippen).
  */
-import { SAETZE, BRETT, ZIEL_INDEX } from './data.js';
+import { SAETZE, BRETT, ZIEL_INDEX, KEIN_WORT } from './data.js';
 
 const SPIELER_FARBEN = ['#FF6B57', '#3FA7E0', '#2EC4A6', '#C76FCB'];
 const WUERFEL_AUGEN = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
@@ -24,6 +24,11 @@ const FRAGE_EMOJIS = ['🪞', '💬', '🤝', '⭐', '🔤', '🧍', '💡', '�
 
 /** Lern-Tipp, der NACH dem Antworten verraten wird (je nach Kategorie). */
 function tippFuer(satz) {
+  if (satz.antwort === KEIN_WORT) {
+    return satz.kat === 'verb'
+      ? 'Reflexives Verb – im Englischen steht hier KEIN „sich"/Pronomen!'
+      : 'Achtung: Hier braucht das Englische KEIN Reflexivpronomen.';
+  }
   if (satz.kat === 'verb') return 'Reflexives Verb – im Englischen ohne „sich"!';
   if (satz.kat === 'eachother') {
     return satz.antwort.toLowerCase().includes('each other')
@@ -95,13 +100,13 @@ export function mount(container, context) {
           <input type="checkbox" data-hardcore ${hardcore ? 'checked' : ''}>
           <span>🔥 <strong>Hardcore-Modus:</strong> Antwort selbst eintippen statt auswählen</span>
         </label>
-        <div class="rx-regeln">
-          <h3>📜 So geht's</h3>
+        <div class="rx-auffrischung">
+          <h3>📚 Kurz aufgefrischt</h3>
+          <p class="rx-auffrischung-thema">Drei Bereiche rund ums „sich": Reflexivpronomen, reflexive Verben und each other.</p>
           <ul>
-            <li>Würfle und rücke vor. Auf jedem Feld wartet ein Satz – setze das richtige Wort ein (Reflexivpronomen, Verb oder each other).</li>
-            <li><strong>Achtung:</strong> Viele Verben mit „sich" im Deutschen brauchen im Englischen <em>kein</em> Pronomen (I remember = ich erinnere mich).</li>
-            <li><strong>Richtig</strong> → du bleibst stehen. <strong>Falsch</strong> → zurück auf das Feld, von dem du diesen Zug gestartet bist!</li>
-            <li>Ereignisfelder schicken dich vor (⏩) oder zurück (⏪), lassen dich aussetzen (😴) oder nochmal würfeln (🎲).</li>
+            <li><strong>Reflexivpronomen</strong> stehen, wenn sich die Handlung auf einen selbst richtet – Singular <em>-self</em>, Plural <em>-selves</em>: He cut <em>himself</em>.</li>
+            <li><strong>Vorsicht „sich":</strong> Viele deutsche Verben mit „sich" stehen im Englischen <strong>ohne</strong> Pronomen – I <em>remember</em> (ich erinnere mich), ebenso <em>relax</em>, <em>feel</em>, <em>worry</em>, <em>hurry</em>.</li>
+            <li><strong>each other</strong> = einander / sich gegenseitig: They help <em>each other</em>. Bei <em>themselves</em> macht dagegen jeder etwas nur für sich selbst.</li>
           </ul>
         </div>
       </div>
@@ -400,7 +405,9 @@ export function mount(container, context) {
         </form>`
       : `
         <div class="rx-antworten">
-          ${optionen.map((o) => `<button type="button" class="rx-antwort" data-antwort="${o.replaceAll('"', '&quot;')}" lang="en">${o}</button>`).join('')}
+          ${optionen.map((o) => o === KEIN_WORT
+            ? `<button type="button" class="rx-antwort rx-antwort--leer" data-antwort="${o}" lang="de">— kein Wort</button>`
+            : `<button type="button" class="rx-antwort" data-antwort="${o.replaceAll('"', '&quot;')}" lang="en">${o}</button>`).join('')}
         </div>`;
 
     aktionEl.innerHTML = `
@@ -419,18 +426,22 @@ export function mount(container, context) {
 
     // Gemeinsame Auswertung für beide Antwortarten (Knöpfe & Freitext).
     function werteAntwortAus(korrekt) {
-      aktionEl.querySelector('.rx-luecke').textContent = satz.antwort;
+      const istLeer = satz.antwort === KEIN_WORT;
+      const luecke = aktionEl.querySelector('.rx-luecke');
+      luecke.textContent = satz.antwort;
+      luecke.classList.toggle('rx-luecke--leer', istLeer);
 
       if (korrekt) s.richtig += 1;
       else s.falsch += 1;
       aktualisiereStatus();
 
+      const loesungAnzeige = istLeer ? 'kein Wort (—)' : `„${satz.antwort}"`;
       const zurueck = s.zugStart;
       feedbackEl.innerHTML = `
         <p class="rx-feedback-text ${korrekt ? 'rx-feedback-text--gruen' : 'rx-feedback-text--rot'}">
           ${korrekt
             ? `✅ Richtig! <span class="rx-typ">${tippFuer(satz)}</span>`
-            : `❌ Leider falsch – richtig ist „${satz.antwort}". <span class="rx-typ">${tippFuer(satz)}</span>`}
+            : `❌ Leider falsch – richtig ist ${loesungAnzeige}. <span class="rx-typ">${tippFuer(satz)}</span>`}
         </p>
         <button type="button" class="knopf knopf--minze" data-weiter>
           ${korrekt || s.pos === zurueck ? 'Weiter ➜' : (zurueck === 0 ? 'Zurück zum Start ➜' : `Zurück auf Feld ${zurueck} ➜`)}
@@ -547,10 +558,15 @@ export function mount(container, context) {
     return a;
   }
 
+  /** Im Hardcore-Modus als „kein Wort" akzeptierte Eingaben (bereits normalisiert). */
+  const LEER_EINGABEN = new Set(['-', '–', '—', '/', 'x', 'kein', 'keins', 'kein wort', 'nichts', 'nothing', 'none', 'no pronoun']);
+
   /** Hardcore-Vergleich: verzeiht Groß-/Kleinschreibung, Leerzeichen & „eachother". */
   function istKorrekt(eingabe, satz) {
+    const ein = normalisiere(eingabe);
+    if (satz.antwort === KEIN_WORT) return LEER_EINGABEN.has(ein);
     const soll = [satz.antwort, ...(satz.akzeptiert ?? [])].map(normalisiere);
-    return soll.includes(normalisiere(eingabe));
+    return soll.includes(ein);
   }
 
   function normalisiere(text) {

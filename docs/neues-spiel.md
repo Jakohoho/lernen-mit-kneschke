@@ -53,9 +53,40 @@ export const FELDER = [
 ];
 ```
 
-UI-Texte (Knopf-Beschriftungen, Feedback-Meldungen, Spielregeln) dürfen in
-`game.js` bleiben – sie gehören zur Oberfläche, nicht zum Lerninhalt.
+UI-Texte (Knopf-Beschriftungen, Feedback-Meldungen, der Auffrischungstext –
+siehe Schritt 2c) dürfen in `game.js` bleiben – sie gehören zur Oberfläche,
+nicht zum auswechselbaren Lerninhalt.
 Referenz: `content/games/klasse7-englisch-self-pronouns-race/`.
+
+## Schritt 2c: Start-Bildschirm – kurze inhaltliche Auffrischung statt Anleitung
+
+Auf dem ersten Bildschirm (Modus-Auswahl) zeigt **kein** Spiel mehr eine
+„So geht's"-Bedienanleitung – die Spiele sind selbsterklärend. Den Platz nutzt
+stattdessen eine **kurze fachliche Auffrischung** des Themas: Sie frischt die
+Grundlagen auf, die im Spiel geübt werden, bevor es losgeht.
+
+```html
+<div class="xx-auffrischung">
+  <h3>📚 Kurz aufgefrischt</h3>
+  <p class="xx-auffrischung-thema">Ein Satz: Worum geht es in diesem Thema?</p>
+  <ul>
+    <li>Die 2–4 wichtigsten Regeln/Formen, jeweils mit kurzem Beispiel.</li>
+  </ul>
+</div>
+```
+
+Faustregeln für den Auffrischungstext:
+
+- **Niveau passend zur Klasse** und zur inhaltlichen Tiefe des Spiels – nur das,
+  was im Spiel auch wirklich vorkommt (nicht mehr Grammatik als nötig).
+- **Knapp:** eine Thema-Zeile plus 2–4 Stichpunkte mit kleinem Beispiel. Es ist
+  eine Auffrischung, kein Lehrbuchkapitel.
+- Englische Schlüsselwörter/Formen in `<em>` setzen – sie werden farbig
+  hervorgehoben (siehe `.xx-auffrischung em` in der `game.css`).
+- Reiner Oberflächentext, gehört in `game.js`. Das CSS dazu kopierst du am
+  besten aus einem vorhandenen Spiel und passt nur das Präfix (`xx-`) an.
+
+Referenz: die `zeigeModusWahl()`-Funktion in jedem der drei Bestandsspiele.
 
 ## Schritt 3: `game.js` schreiben – der Spiel-Vertrag
 

@@ -66,12 +66,14 @@ export function mount(container, context) {
           <input type="checkbox" data-hardcore ${hardcore ? 'checked' : ''}>
           <span>🔥 <strong>Hardcore-Modus:</strong> Antwort selbst eintippen statt auswählen</span>
         </label>
-        <div class="spr-regeln">
-          <h3>📜 So geht's</h3>
+        <div class="spr-auffrischung">
+          <h3>📚 Kurz aufgefrischt</h3>
+          <p class="spr-auffrischung-thema">Reflexivpronomen: myself, yourself, himself … – wenn man etwas an oder mit sich selbst tut.</p>
           <ul>
-            <li>Auf jedem Feld wartet ein Lückensatz – wähle das passende Reflexivpronomen.</li>
-            <li>Ereignisfelder lassen dich springen (⏩ / ⏪) oder aussetzen (😞) – im Übungsmodus sind sie nur eine Schrecksekunde.</li>
-            <li>Im Mehrspielermodus gewinnst du Felder mit richtigen Antworten. Besetzte Felder überspringst du.</li>
+            <li>Richtet sich die Handlung auf das Subjekt selbst zurück, steht ein Reflexivpronomen: She hurt <em>herself</em>.</li>
+            <li>Singular endet auf <em>-self</em>, Plural auf <em>-selves</em>.</li>
+            <li>Die Formen: I → <em>myself</em> · you → <em>yourself</em> · he → <em>himself</em> · she → <em>herself</em> · it → <em>itself</em> · we → <em>ourselves</em> · you (mehrere) → <em>yourselves</em> · they → <em>themselves</em>.</li>
+            <li><em>by myself</em> heißt „allein / ohne Hilfe": I made this cake by myself.</li>
           </ul>
         </div>
       </div>

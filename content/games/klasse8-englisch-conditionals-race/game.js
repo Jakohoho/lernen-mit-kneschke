@@ -86,13 +86,14 @@ export function mount(container, context) {
           <input type="checkbox" data-hardcore ${hardcore ? 'checked' : ''}>
           <span>🔥 <strong>Hardcore-Modus:</strong> Antwort selbst eintippen statt auswählen</span>
         </label>
-        <div class="cr-regeln">
-          <h3>📜 So geht's</h3>
+        <div class="cr-auffrischung">
+          <h3>📚 Kurz aufgefrischt</h3>
+          <p class="cr-auffrischung-thema">If-Sätze (Conditionals): drei Typen – je nachdem, wie wahrscheinlich die Bedingung ist.</p>
           <ul>
-            <li>Würfle und rücke vor. Auf jedem Feld wartet ein If-Satz – setze das Verb in Klammern in die richtige Form.</li>
-            <li><strong>Richtig</strong> → du bleibst stehen. <strong>Falsch</strong> → zurück auf das Feld, von dem du diesen Zug gestartet bist!</li>
-            <li>Ereignisfelder schicken dich vor (⏩) oder zurück (⏪), lassen dich aussetzen (😴) oder nochmal würfeln (🎲).</li>
-            <li>Wer zuerst das Ziel erreicht, gewinnt. Der Satz auf einem Feld wechselt jedes Mal.</li>
+            <li><strong>Typ 1 – real / möglich:</strong> <em>if</em> + present simple, Hauptsatz mit <em>will</em>: If it rains, we <em>will stay</em> home.</li>
+            <li><strong>Typ 2 – unwahrscheinlich (Gegenwart):</strong> <em>if</em> + past simple, Hauptsatz mit <em>would</em>: If I <em>had</em> time, I <em>would help</em> you.</li>
+            <li><strong>Typ 3 – Vergangenheit (nicht mehr änderbar):</strong> <em>if</em> + past perfect, Hauptsatz mit <em>would have</em> + 3. Verbform: If we <em>had left</em> earlier, we <em>would have caught</em> the train.</li>
+            <li>Im <em>if</em>-Satz steht nie <em>will</em> oder <em>would</em>. Steht der <em>if</em>-Satz vorn, folgt ein Komma.</li>
           </ul>
         </div>
       </div>

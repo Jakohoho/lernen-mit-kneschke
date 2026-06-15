@@ -72,7 +72,7 @@
   cursor: pointer;
 }
 
-.rx-regeln {
+.rx-auffrischung {
   text-align: left;
   background: var(--gelb-sanft);
   border: var(--kontur);
@@ -81,9 +81,11 @@
   font-size: 0.92rem;
 }
 
-.rx-regeln h3 { margin-bottom: 0.3em; font-size: 1.05rem; }
-.rx-regeln ul { margin: 0; padding-left: 1.2rem; }
-.rx-regeln li { margin-bottom: 0.3em; }
+.rx-auffrischung h3 { margin-bottom: 0.3em; font-size: 1.05rem; }
+.rx-auffrischung-thema { margin: 0 0 0.5em; font-weight: 700; }
+.rx-auffrischung ul { margin: 0; padding-left: 1.2rem; }
+.rx-auffrischung li { margin-bottom: 0.35em; }
+.rx-auffrischung em { font-style: normal; font-weight: 700; color: var(--koralle-tief); }
 
 /* ---------- Mehrspieler-Setup ---------- */
 
@@ -357,6 +359,9 @@
   font-weight: 800;
 }
 
+/* Gefüllte Lücke, an die KEIN Wort gehört: gedämpfter „—"-Strich. */
+.rx-luecke--leer { color: var(--tinte-soft); }
+
 .rx-antworten {
   display: grid;
   grid-template-columns: 1fr;
@@ -385,6 +390,8 @@
 .rx-antwort:disabled { cursor: default; opacity: 0.75; }
 .rx-antwort--richtig { background: var(--minze) !important; color: #fff; opacity: 1 !important; }
 .rx-antwort--falsch { background: var(--koralle) !important; color: #fff; opacity: 1 !important; animation: rx-schuetteln 0.35s ease; }
+/* „kein Wort"-Option: gestrichelter Rahmen, damit sie sich von echten Pronomen abhebt. */
+.rx-antwort--leer { border-style: dashed; font-style: italic; }
 
 @keyframes rx-schuetteln {
   0%, 100% { transform: translateX(0); }

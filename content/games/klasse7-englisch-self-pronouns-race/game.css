@@ -72,7 +72,7 @@
   cursor: pointer;
 }
 
-.spr-regeln {
+.spr-auffrischung {
   text-align: left;
   background: var(--gelb-sanft);
   border: var(--kontur);
@@ -81,9 +81,11 @@
   font-size: 0.92rem;
 }
 
-.spr-regeln h3 { margin-bottom: 0.3em; font-size: 1.05rem; }
-.spr-regeln ul { margin: 0; padding-left: 1.2rem; }
-.spr-regeln li { margin-bottom: 0.3em; }
+.spr-auffrischung h3 { margin-bottom: 0.3em; font-size: 1.05rem; }
+.spr-auffrischung-thema { margin: 0 0 0.5em; font-weight: 700; }
+.spr-auffrischung ul { margin: 0; padding-left: 1.2rem; }
+.spr-auffrischung li { margin-bottom: 0.35em; }
+.spr-auffrischung em { font-style: normal; font-weight: 700; color: var(--koralle-tief); }
 
 /* ---------- Mehrspieler-Setup ---------- */
 
