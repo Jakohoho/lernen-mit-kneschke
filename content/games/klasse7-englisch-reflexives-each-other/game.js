@@ -106,7 +106,7 @@ export function mount(container, context) {
           <ul>
             <li><strong>Reflexivpronomen</strong> stehen, wenn sich die Handlung auf einen selbst richtet – Singular <em>-self</em>, Plural <em>-selves</em>: He cut <em>himself</em>.</li>
             <li><strong>Vorsicht „sich":</strong> Viele deutsche Verben mit „sich" stehen im Englischen <strong>ohne</strong> Pronomen – I <em>remember</em> (ich erinnere mich), ebenso <em>relax</em>, <em>feel</em>, <em>worry</em>, <em>hurry</em>.</li>
-            <li><strong>each other</strong> = einander / sich gegenseitig: They help <em>each other</em>. Bei <em>themselves</em> macht dagegen jeder etwas nur für sich selbst.</li>
+            <li><strong>each other</strong> = einander / sich gegenseitig: They visit <em>each other</em>. Bei <em>themselves</em> macht dagegen jeder etwas nur für sich selbst.</li>
           </ul>
         </div>
       </div>
