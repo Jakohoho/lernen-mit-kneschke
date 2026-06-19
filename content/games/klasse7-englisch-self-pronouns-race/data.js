@@ -39,7 +39,7 @@ export const FELDER = [
   { typ: 'frage', nr: 17, satz: 'We prepared ___ for the test.', antwort: 'ourselves', emoji: '📚' },
   { typ: 'frage', nr: 18, satz: 'The baby fed ___.', antwort: 'itself', emoji: '🍼' },
   { typ: 'frage', nr: 19, satz: 'I saw ___ in the photo.', antwort: 'myself', emoji: '📷' },
-  { typ: 'frage', nr: 20, satz: 'The players congratulated ___.', antwort: 'themselves', emoji: '🏆' },
+  { typ: 'frage', nr: 20, satz: 'After winning the cup, the players treated ___ to a big meal.', antwort: 'themselves', emoji: '🏆' },
   { typ: 'frage', nr: 21, satz: 'The bird fed ___ in the nest.', antwort: 'itself', emoji: '🐦' },
   { typ: 'frage', nr: 22, satz: 'The team celebrated ___ at the stadium.', antwort: 'themselves', emoji: '🏟️' },
   { typ: 'ziel' },

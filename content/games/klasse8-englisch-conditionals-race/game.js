@@ -92,7 +92,7 @@ export function mount(container, context) {
           <ul>
             <li><strong>Typ 1 – real / möglich:</strong> <em>if</em> + present simple, Hauptsatz mit <em>will</em>: If it rains, we <em>will stay</em> home.</li>
             <li><strong>Typ 2 – unwahrscheinlich (Gegenwart):</strong> <em>if</em> + past simple, Hauptsatz mit <em>would</em>: If I <em>had</em> time, I <em>would help</em> you.</li>
-            <li><strong>Typ 3 – Vergangenheit (nicht mehr änderbar):</strong> <em>if</em> + past perfect, Hauptsatz mit <em>would have</em> + 3. Verbform: If we <em>had left</em> earlier, we <em>would have caught</em> the train.</li>
+            <li><strong>Typ 3 – Vergangenheit (nicht mehr änderbar):</strong> <em>if</em> + past perfect, Hauptsatz mit <em>would have</em> + past participle: If we <em>had left</em> earlier, we <em>would have caught</em> the train.</li>
             <li>Im <em>if</em>-Satz selbst steht nie <em>will</em> oder <em>would</em> – nur im Hauptsatz.</li>
           </ul>
         </div>
