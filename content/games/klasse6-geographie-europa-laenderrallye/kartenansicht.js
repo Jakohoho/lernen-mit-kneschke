@@ -10,9 +10,10 @@
  * (requestAnimationFrame). Linien bleiben dabei immer gleich dünn und scharf.
  * Damit das auch auf langsamen Handys flüssig bleibt, wird während einer
  * Bewegung und in der Übersicht die grobe Detailstufe gezeichnet; die feinen
- * Küstenlinien erscheinen erst stark vergrößert und in Ruhe. Wo der Browser
- * vorhergesagte Fingerpositionen liefert (getPredictedEvents), folgt die
- * Karte diesen – das gleicht die Zeichenverzögerung aus.
+ * Küstenlinien erscheinen erst stark vergrößert und in Ruhe.
+ * Die Fingerpositionen laufen durch einen 1€-Filter (Casiez, Roussel & Vogel,
+ * CHI 2012): Bei ruhigen Fingern glättet er das Sensorrauschen, damit die Karte
+ * nicht zittert; bei schnellen Bewegungen glättet er kaum und verzögert nicht.
  */
 import { KARTE } from './karte.js';
 
@@ -22,6 +23,26 @@ const ZUSTAENDE = ['ist-tipp', 'ist-erledigt', 'ist-verpasst', 'ist-auswahl', 'i
 const TIPP_TOLERANZ = 8;   // px Bewegung, bis aus einem Tippen ein Verschieben wird
 const MIN_BREITE = 70;     // stärkste Vergrößerung: 70 Karteneinheiten ≈ 350 km
 const DETAIL_AB = 450;     // feine Küstenlinien erst, wenn der Ausschnitt schmaler ist (≈ 2250 km)
+
+/**
+ * 1€-Filter: Tiefpass mit geschwindigkeitsabhängiger Grenzfrequenz (Werte für Bildschirmpixel).
+ * Abgestimmt per Simulation: im Stand halbes Sensorrauschen, beim Anfahren aus dem Stand
+ * höchstens ~1 px Rückstand (die Lehrbuchwerte 1 Hz / d 1 Hz hinken bei kurzen Gesten nach).
+ */
+class EinEuroFilter {
+  constructor(minGrenze = 5, beta = 0.2, dGrenze = 30) {
+    Object.assign(this, { minGrenze, beta, dGrenze, t: null, x: 0, dx: 0 });
+  }
+  static alpha(grenze, dt) { const tau = 1 / (2 * Math.PI * grenze); return 1 / (1 + tau / dt); }
+  filter(x, t) {
+    if (this.t === null) { Object.assign(this, { t, x, dx: 0 }); return x; }
+    const dt = Math.max(t - this.t, 0.001);
+    this.t = t;
+    this.dx += EinEuroFilter.alpha(this.dGrenze, dt) * ((x - this.x) / dt - this.dx);
+    this.x += EinEuroFilter.alpha(this.minGrenze + this.beta * Math.abs(this.dx), dt) * (x - this.x);
+    return this.x;
+  }
+}
 
 /**
  * @param {HTMLElement} el      leeres Element, in das die Karte gezeichnet wird
@@ -149,30 +170,29 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     return { x: v.x + ((p.x - r.left) / r.width) * v.w, y: v.y + ((p.y - r.top) / r.height) * v.h };
   }
 
-  // je Finger: echte Position (x, y) und – falls der Browser sie liefert – vorhergesagte (vx, vy)
-  const lage = (z, vorher) => (vorher && z.vx !== undefined ? { x: z.vx, y: z.vy } : z);
-  function mitte(vorher = false) {
-    const [a, b] = [...zeiger.values()].map((z) => lage(z, vorher));
+  // je Finger: geglättete Position (x, y), dazu die Filter und die rohe Position fürs Tipp-Erkennen
+  function mitte() {
+    const [a, b] = [...zeiger.values()];
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
   }
-  function abstand(vorher = false) {
-    const [a, b] = [...zeiger.values()].map((z) => lage(z, vorher));
+  function abstand() {
+    const [a, b] = [...zeiger.values()];
     return Math.hypot(a.x - b.x, a.y - b.y) || 1;
   }
 
-  /** Ziel-Ausschnitt aus den Fingerpositionen (vorher = vorhergesagte Positionen nutzen). */
-  function berechneZiel(vorher) {
+  /** Ziel-Ausschnitt aus den (geglätteten) Fingerpositionen. */
+  function berechneZiel() {
     const r0 = geste.r0;
     if (geste.art === 'zoom' && zeiger.size === 2) {
-      const m = mitte(vorher);
+      const m = mitte();
       const minS = geste.vb0.w / Math.max(W, H / seitenverhaeltnis());
       const maxS = geste.vb0.w / MIN_BREITE;
-      const s = Math.min(maxS, Math.max(minS, abstand(vorher) / geste.d0));
+      const s = Math.min(maxS, Math.max(minS, abstand() / geste.d0));
       const w = geste.vb0.w / s;
       const h = geste.vb0.h / s;
       geste.ziel = { x: geste.k0.x - ((m.x - r0.left) / r0.width) * w, y: geste.k0.y - ((m.y - r0.top) / r0.height) * h, w, h };
     } else if (geste.art === 'schieben' && zeiger.size >= 1) {
-      const p = lage([...zeiger.values()][0], vorher);
+      const p = [...zeiger.values()][0];
       const k = geste.vb0.w / r0.width;
       geste.ziel = { ...geste.vb0, x: geste.vb0.x - (p.x - geste.start.x) * k, y: geste.vb0.y - (p.y - geste.start.y) * k };
     }
@@ -192,14 +212,17 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     cancelAnimationFrame(bildAnfrage);
     bildAnfrage = 0;
     if (!geste || geste.art === 'tipp') return;
-    berechneZiel(false);           // zum Schluss die echten Fingerpositionen – kein Überschießen
+    berechneZiel();
     if (geste.ziel) setze(geste.ziel);
   }
 
   svg.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
     cancelAnimationFrame(animation);
-    zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const fx = new EinEuroFilter();
+    const fy = new EinEuroFilter();
+    const t = e.timeStamp / 1000;
+    zeiger.set(e.pointerId, { x: fx.filter(e.clientX, t), y: fy.filter(e.clientY, t), fx, fy });
     try { svg.setPointerCapture(e.pointerId); } catch { /* ältere Browser */ }
     if (zeiger.size === 1) {
       geste = { art: 'tipp', start: { x: e.clientX, y: e.clientY }, vb0: { ...vb } };
@@ -213,16 +236,17 @@ export function erzeugeKarte(el, { codes, onTipp }) {
 
   svg.addEventListener('pointermove', (e) => {
     if (!zeiger.has(e.pointerId) || !geste) return;
-    const vorhersage = e.getPredictedEvents?.() ?? [];
-    const v = vorhersage[vorhersage.length - 1];
-    zeiger.set(e.pointerId, v ? { x: e.clientX, y: e.clientY, vx: v.clientX, vy: v.clientY } : { x: e.clientX, y: e.clientY });
+    const z = zeiger.get(e.pointerId);
+    const t = e.timeStamp / 1000;
+    z.x = z.fx.filter(e.clientX, t);
+    z.y = z.fy.filter(e.clientY, t);
     if (geste.art === 'tipp' && Math.hypot(e.clientX - geste.start.x, e.clientY - geste.start.y) > TIPP_TOLERANZ) {
       geste.art = 'schieben';
       geste.r0 = svg.getBoundingClientRect();
     }
     if (geste.art === 'tipp') return;
     bewegung(true);
-    berechneZiel(true);
+    berechneZiel();
     zeichneBald();
   });
 
@@ -238,7 +262,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
       // Ein Finger bleibt liegen → nahtlos weiter verschieben
       beendeGeste();
       const [p] = zeiger.values();
-      geste = { art: 'schieben', start: p, vb0: { ...vb }, r0: svg.getBoundingClientRect() };
+      geste = { art: 'schieben', start: { x: p.x, y: p.y }, vb0: { ...vb }, r0: svg.getBoundingClientRect() };
       return;
     }
     if (zeiger.size === 0) {
