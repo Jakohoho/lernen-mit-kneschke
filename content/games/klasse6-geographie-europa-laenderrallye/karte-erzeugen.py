@@ -16,7 +16,9 @@ Kosovo ist eigenständig, Nordzypern gehört zu Zypern).
 
 Ablauf: Ausschnitt wählen → flächentreu projizieren (Lambert, Mitte 52° N / 20° O)
 → vereinfachen (gemeinsame Grenzen bleiben deckungsgleich) → je Land ein
-SVG-Pfad. Es werden nur Küsten, Grenzen und Hauptstadt-Punkte erzeugt –
+SVG-Pfad. Es entstehen zwei Detailstufen: „fein“ (1,5 km) für die herangezoomte
+Karte in Ruhe und „grob“ (5 km, alle Inseln bleiben) für die Übersicht und während des Zoomens –
+so bleibt die Karte auch auf langsamen Handys flüssig. Es werden nur Küsten, Grenzen und Hauptstadt-Punkte erzeugt –
 keine Beschriftungen, Flüsse oder Seen.
 """
 import json
@@ -110,27 +112,14 @@ def schwerpunkt(polys):
     return beste[1], beste[2]
 
 
-def main():
-    laender_roh = lade('ne_10m_admin_0_countries_deu')
-    orte_roh = lade('ne_10m_populated_places_simple')
-    laender_p = CACHE / 'laender_projiziert.geojson'
-    orte = CACHE / 'hauptstaedte.geojson'
-    orte_p = CACHE / 'hauptstaedte_projiziert.geojson'
-
+def detailstufe(laender_roh, name, intervall, inseln_ab):
+    """Projizierte, vereinfachte Länder → (Pfade je Land, Polygone je Land, Hintergrund-Pfade)."""
+    ziel = CACHE / f'laender_{name}.geojson'
     mapshaper(laender_roh, '-filter-fields', 'ADM0_A3', '-clip', 'bbox=-50,15,110,86', '-proj', PROJ,
-              '-clip', f'bbox={XMIN},{YMIN},{XMAX},{YMAX}', '-filter-islands', 'min-area=15km2',
-              '-simplify', 'interval=1500', 'keep-shapes', '-o', laender_p, 'precision=10')
-
-    hs = [f for f in json.loads(orte_roh.read_text())['features']
-          if f['properties']['featurecla'] == 'Admin-0 capital' and f['properties']['adm0_a3'] in LAENDER]
-    orte.write_text(json.dumps({'type': 'FeatureCollection', 'features': [
-        {'type': 'Feature', 'properties': {'A3': f['properties']['adm0_a3']},
-         'geometry': {'type': 'Point', 'coordinates': [f['properties']['longitude'], f['properties']['latitude']]}}
-        for f in hs]}))
-    mapshaper(orte, '-proj', PROJ, '-o', orte_p, 'precision=10')
-
+              '-clip', f'bbox={XMIN},{YMIN},{XMAX},{YMAX}', '-filter-islands', f'min-area={inseln_ab}km2',
+              '-simplify', f'interval={intervall}', 'keep-shapes', '-o', ziel, 'precision=10')
     pfade, polys, hintergrund = {}, {}, []
-    for f in json.loads(laender_p.read_text())['features']:
+    for f in json.loads(ziel.read_text())['features']:
         code = ZUSAMMENFASSEN.get(f['properties']['ADM0_A3'], f['properties']['ADM0_A3'])
         teile = polygone(f['geometry'])
         d = ''.join(ring_pfad(r) for poly in teile for r in poly)
@@ -141,13 +130,34 @@ def main():
             hintergrund.append(d)
     fehlt = set(LAENDER) - set(polys)
     assert not fehlt, f'Länder fehlen in den Kartendaten: {fehlt}'
+    for code in KLEINSTAATEN:   # Vatikan ist kleiner als ein Zehntel Karteneinheit → winzige Raute
+        if not pfade[code]:
+            x, y = px(*schwerpunkt(polys[code]))
+            pfade[code] = f'M{x:.1f} {y - .3:.1f}l.3 .3-.3 .3-.3-.3z'
+    return pfade, polys, ''.join(hintergrund)
+
+
+def main():
+    laender_roh = lade('ne_10m_admin_0_countries_deu')
+    orte_roh = lade('ne_10m_populated_places_simple')
+    orte = CACHE / 'hauptstaedte.geojson'
+    orte_p = CACHE / 'hauptstaedte_projiziert.geojson'
+
+    pfade, polys, hintergrund = detailstufe(laender_roh, 'fein', 1500, 15)
+    pfade_grob, _, hintergrund_grob = detailstufe(laender_roh, 'grob', 5000, 15)
+
+    hs = [f for f in json.loads(orte_roh.read_text())['features']
+          if f['properties']['featurecla'] == 'Admin-0 capital' and f['properties']['adm0_a3'] in LAENDER]
+    orte.write_text(json.dumps({'type': 'FeatureCollection', 'features': [
+        {'type': 'Feature', 'properties': {'A3': f['properties']['adm0_a3']},
+         'geometry': {'type': 'Point', 'coordinates': [f['properties']['longitude'], f['properties']['latitude']]}}
+        for f in hs]}))
+    mapshaper(orte, '-proj', PROJ, '-o', orte_p, 'precision=10')
 
     kreise = {}
     for code in KLEINSTAATEN:
         x, y = px(*schwerpunkt(polys[code]))
         kreise[code] = [round(x, 1), round(y, 1)]
-        if not pfade[code]:   # Vatikan ist kleiner als ein Zehntel Karteneinheit → winzige Raute
-            pfade[code] = f'M{x:.1f} {y - .3:.1f}l.3 .3-.3 .3-.3-.3z'
 
     hauptstaedte = {}
     for f in json.loads(orte_p.read_text())['features']:
@@ -163,7 +173,9 @@ def main():
         'hoehe': round((YMAX - YMIN) * S, 1),
         'europa': [round(x0, 1), round(y0, 1), round(x1 - x0, 1), round(y1 - y0, 1)],
         'laender': pfade,
-        'hintergrund': ''.join(hintergrund),
+        'hintergrund': hintergrund,
+        'laenderGrob': pfade_grob,
+        'hintergrundGrob': hintergrund_grob,
         'hauptstaedte': hauptstaedte,
         'kreise': kreise,
     }

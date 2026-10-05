@@ -302,6 +302,12 @@
 
 .elr-karte svg { display: block; width: 100%; height: 100%; touch-action: none; }
 
+/* Detailstufen: grob in Bewegung und in der Übersicht, fein vergrößert und in Ruhe.
+   Fein wird weich eingeblendet, bei der nächsten Bewegung sofort wieder grob. */
+.elr-karte svg:not(.elr-detail) .elr-stufe--fein { opacity: 0; visibility: hidden; }
+.elr-karte svg.elr-detail .elr-stufe--fein { opacity: 1; visibility: visible; transition: opacity 0.2s ease; }
+.elr-karte svg.elr-detail .elr-stufe--grob { visibility: hidden; transition: visibility 0s linear 0.2s; }
+
 .elr-meer { fill: var(--blau-sanft); }
 
 .elr-grau {

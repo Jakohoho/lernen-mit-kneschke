@@ -7,8 +7,12 @@
  *
  * Die Karte folgt den Fingern direkt: Jede Bewegung setzt den Ausschnitt
  * (viewBox) neu – gebündelt auf höchstens ein Mal pro Bildschirmbild
- * (requestAnimationFrame). Linien bleiben dabei immer gleich dünn und scharf,
- * es gibt kein Nachzeichnen nach dem Loslassen.
+ * (requestAnimationFrame). Linien bleiben dabei immer gleich dünn und scharf.
+ * Damit das auch auf langsamen Handys flüssig bleibt, wird während einer
+ * Bewegung und in der Übersicht die grobe Detailstufe gezeichnet; die feinen
+ * Küstenlinien erscheinen erst stark vergrößert und in Ruhe. Wo der Browser
+ * vorhergesagte Fingerpositionen liefert (getPredictedEvents), folgt die
+ * Karte diesen – das gleicht die Zeichenverzögerung aus.
  */
 import { KARTE } from './karte.js';
 
@@ -17,6 +21,7 @@ const ZUSTAENDE = ['ist-tipp', 'ist-erledigt', 'ist-verpasst', 'ist-auswahl', 'i
   'ist-falsch', 'ist-gesucht', 'ist-loesung'];
 const TIPP_TOLERANZ = 8;   // px Bewegung, bis aus einem Tippen ein Verschieben wird
 const MIN_BREITE = 70;     // stärkste Vergrößerung: 70 Karteneinheiten ≈ 350 km
+const DETAIL_AB = 450;     // feine Küstenlinien erst, wenn der Ausschnitt schmaler ist (≈ 2250 km)
 
 /**
  * @param {HTMLElement} el      leeres Element, in das die Karte gezeichnet wird
@@ -28,8 +33,11 @@ export function erzeugeKarte(el, { codes, onTipp }) {
   el.innerHTML = `
     <svg xmlns="${NS}" role="img" aria-label="Karte von Europa">
       <rect class="elr-meer" x="${-W}" y="${-H}" width="${3 * W}" height="${3 * H}"/>
-      <path class="elr-grau" d="${KARTE.hintergrund}"/>
-      <g class="elr-laender">${codes.map((id) => `<path class="elr-land" data-id="${id}" d="${KARTE.laender[id]}"/>`).join('')}</g>
+      ${[['grob', KARTE.hintergrundGrob, KARTE.laenderGrob], ['fein', KARTE.hintergrund, KARTE.laender]].map(([stufe, grau, laender]) => `
+      <g class="elr-stufe elr-stufe--${stufe}">
+        <path class="elr-grau" d="${grau}"/>
+        <g class="elr-laender">${codes.map((id) => `<path class="elr-land" data-id="${id}" d="${laender[id]}"/>`).join('')}</g>
+      </g>`).join('')}
       <g class="elr-punkte">${codes.map((id) => {
         const [x, y] = KARTE.hauptstaedte[id];
         return `<circle class="elr-hauptstadt" data-hs="${id}" cx="${x}" cy="${y}" r="2"/>`;
@@ -82,6 +90,21 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     for (const c of hauptstadtPunkte) c.setAttribute('r', rPunkt);
     for (const c of tippKreise) c.setAttribute('r', rKreis);
     for (const c of effekte.children) c.setAttribute('r', (c.dataset.r * massstab).toFixed(2));
+    waehleStufe();
+  }
+
+  // Grob in Bewegung und in der Übersicht, fein nur vergrößert und in Ruhe
+  let inBewegung = false;
+  let ruheTimer = 0;
+  function waehleStufe() {
+    const detail = !inBewegung && vb.w <= DETAIL_AB;
+    if (detail !== svg.classList.contains('elr-detail')) svg.classList.toggle('elr-detail', detail);
+  }
+  function bewegung(an) {
+    clearTimeout(ruheTimer);
+    if (inBewegung === an) return;
+    inBewegung = an;
+    waehleStufe();
   }
 
   /** Ausschnitt so wählen, dass das Rechteck r = [x, y, w, h] vollständig sichtbar ist. */
@@ -96,11 +119,13 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     const a = { ...vb };
     const b = begrenze(ziel);
     const t0 = performance.now();
+    bewegung(true);
     const schritt = (jetzt) => {
       const k = Math.min(1, (jetzt - t0) / ms);
       const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
       setze({ x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e, w: a.w + (b.w - a.w) * e, h: a.h + (b.h - a.h) * e });
       if (k < 1) animation = requestAnimationFrame(schritt);
+      else bewegung(false);
     };
     animation = requestAnimationFrame(schritt);
   }
@@ -108,7 +133,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
   function rahmenVon(ids) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const id of ids) {
-      const b = svg.querySelector(`.elr-land[data-id="${id}"]`).getBBox();
+      const b = svg.querySelector(`.elr-stufe--fein .elr-land[data-id="${id}"]`).getBBox();
       x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
       x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
     }
@@ -124,13 +149,33 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     return { x: v.x + ((p.x - r.left) / r.width) * v.w, y: v.y + ((p.y - r.top) / r.height) * v.h };
   }
 
-  function mitte() {
-    const [a, b] = [...zeiger.values()];
+  // je Finger: echte Position (x, y) und – falls der Browser sie liefert – vorhergesagte (vx, vy)
+  const lage = (z, vorher) => (vorher && z.vx !== undefined ? { x: z.vx, y: z.vy } : z);
+  function mitte(vorher = false) {
+    const [a, b] = [...zeiger.values()].map((z) => lage(z, vorher));
     return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
   }
-  function abstand() {
-    const [a, b] = [...zeiger.values()];
+  function abstand(vorher = false) {
+    const [a, b] = [...zeiger.values()].map((z) => lage(z, vorher));
     return Math.hypot(a.x - b.x, a.y - b.y) || 1;
+  }
+
+  /** Ziel-Ausschnitt aus den Fingerpositionen (vorher = vorhergesagte Positionen nutzen). */
+  function berechneZiel(vorher) {
+    const r0 = geste.r0;
+    if (geste.art === 'zoom' && zeiger.size === 2) {
+      const m = mitte(vorher);
+      const minS = geste.vb0.w / Math.max(W, H / seitenverhaeltnis());
+      const maxS = geste.vb0.w / MIN_BREITE;
+      const s = Math.min(maxS, Math.max(minS, abstand(vorher) / geste.d0));
+      const w = geste.vb0.w / s;
+      const h = geste.vb0.h / s;
+      geste.ziel = { x: geste.k0.x - ((m.x - r0.left) / r0.width) * w, y: geste.k0.y - ((m.y - r0.top) / r0.height) * h, w, h };
+    } else if (geste.art === 'schieben' && zeiger.size >= 1) {
+      const p = lage([...zeiger.values()][0], vorher);
+      const k = geste.vb0.w / r0.width;
+      geste.ziel = { ...geste.vb0, x: geste.vb0.x - (p.x - geste.start.x) * k, y: geste.vb0.y - (p.y - geste.start.y) * k };
+    }
   }
 
   // Höchstens ein Neuzeichnen pro Bildschirmbild – immer mit der neuesten Fingerposition
@@ -146,7 +191,9 @@ export function erzeugeKarte(el, { codes, onTipp }) {
   function beendeGeste() {
     cancelAnimationFrame(bildAnfrage);
     bildAnfrage = 0;
-    if (geste && geste.art !== 'tipp' && geste.ziel) setze(geste.ziel);
+    if (!geste || geste.art === 'tipp') return;
+    berechneZiel(false);           // zum Schluss die echten Fingerpositionen – kein Überschießen
+    if (geste.ziel) setze(geste.ziel);
   }
 
   svg.addEventListener('pointerdown', (e) => {
@@ -166,34 +213,17 @@ export function erzeugeKarte(el, { codes, onTipp }) {
 
   svg.addEventListener('pointermove', (e) => {
     if (!zeiger.has(e.pointerId) || !geste) return;
-    zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const r0 = geste.r0;
-    if (geste.art === 'zoom' && zeiger.size === 2) {
-      const m = mitte();
-      const minS = geste.vb0.w / Math.max(W, H / seitenverhaeltnis());
-      const maxS = geste.vb0.w / MIN_BREITE;
-      const s = Math.min(maxS, Math.max(minS, abstand() / geste.d0));
-      const w = geste.vb0.w / s;
-      const h = geste.vb0.h / s;
-      geste.ziel = {
-        x: geste.k0.x - ((m.x - r0.left) / r0.width) * w,
-        y: geste.k0.y - ((m.y - r0.top) / r0.height) * h,
-        w, h,
-      };
-      zeichneBald();
-      return;
-    }
+    const vorhersage = e.getPredictedEvents?.() ?? [];
+    const v = vorhersage[vorhersage.length - 1];
+    zeiger.set(e.pointerId, v ? { x: e.clientX, y: e.clientY, vx: v.clientX, vy: v.clientY } : { x: e.clientX, y: e.clientY });
     if (geste.art === 'tipp' && Math.hypot(e.clientX - geste.start.x, e.clientY - geste.start.y) > TIPP_TOLERANZ) {
       geste.art = 'schieben';
       geste.r0 = svg.getBoundingClientRect();
     }
-    if (geste.art === 'schieben') {
-      const dx = e.clientX - geste.start.x;
-      const dy = e.clientY - geste.start.y;
-      const k = geste.vb0.w / geste.r0.width;
-      geste.ziel = { ...geste.vb0, x: geste.vb0.x - dx * k, y: geste.vb0.y - dy * k };
-      zeichneBald();
-    }
+    if (geste.art === 'tipp') return;
+    bewegung(true);
+    berechneZiel(true);
+    zeichneBald();
   });
 
   function zeigerEnde(e) {
@@ -214,6 +244,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     if (zeiger.size === 0) {
       beendeGeste();
       geste = null;
+      bewegung(false);
     }
   }
   svg.addEventListener('pointerup', zeigerEnde);
@@ -228,7 +259,10 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     const r = svg.getBoundingClientRect();
     const w = vb.w * f;
     const h = vb.h * f;
+    inBewegung = true;
     setze({ x: k.x - ((p.x - r.left) / r.width) * w, y: k.y - ((p.y - r.top) / r.height) * h, w, h });
+    clearTimeout(ruheTimer);
+    ruheTimer = setTimeout(() => bewegung(false), 200);
   }, { passive: false });
 
   /** Tippen auswerten. Daneben (aufs Meer) getippt? Dann das nächste Land im Umkreis von 18 px nehmen. */
@@ -324,6 +358,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     aufraeumen() {
       cancelAnimationFrame(animation);
       cancelAnimationFrame(bildAnfrage);
+      clearTimeout(ruheTimer);
       beobachter.disconnect();
     },
   };
