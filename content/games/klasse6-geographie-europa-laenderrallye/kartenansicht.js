@@ -5,9 +5,10 @@
  *   zwei Finger / Mausrad     → vergrößern und verkleinern
  *   kurz tippen               → Land auswählen
  *
- * Während einer Geste wird nur das fertige Bild per CSS verschoben/skaliert
- * (flüssig auch auf älteren Handys); erst beim Loslassen wird die Karte
- * im neuen Ausschnitt neu gezeichnet.
+ * Die Karte folgt den Fingern direkt: Jede Bewegung setzt den Ausschnitt
+ * (viewBox) neu – gebündelt auf höchstens ein Mal pro Bildschirmbild
+ * (requestAnimationFrame). Linien bleiben dabei immer gleich dünn und scharf,
+ * es gibt kein Nachzeichnen nach dem Loslassen.
  */
 import { KARTE } from './karte.js';
 
@@ -48,10 +49,13 @@ export function erzeugeKarte(el, { codes, onTipp }) {
   let vb = { x: 0, y: 0, w: W, h: H };
   let massstab = 1;          // Karteneinheiten pro Bildschirmpixel
   let animation = 0;
+  let breitePx = 0;          // Größe der Karte auf dem Bildschirm (vom ResizeObserver,
+  let hoehePx = 0;           // damit beim Zoomen nie ein Layout erzwungen wird)
+  const hauptstadtPunkte = [...svg.querySelectorAll('.elr-hauptstadt')];
+  const tippKreise = [...svg.querySelectorAll('.elr-kreis')];
 
   function seitenverhaeltnis() {
-    const r = svg.getBoundingClientRect();
-    return r.width && r.height ? r.height / r.width : H / W;
+    return breitePx && hoehePx ? hoehePx / breitePx : H / W;
   }
 
   function begrenze(v) {
@@ -72,11 +76,12 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     if (![neu.x, neu.y, neu.w, neu.h].every(Number.isFinite)) return;   // Schutz vor ungültigen Werten
     vb = neu;
     svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`);
-    const r = svg.getBoundingClientRect();
-    massstab = r.width ? vb.w / r.width : 1;
-    for (const c of svg.querySelectorAll('.elr-hauptstadt')) c.setAttribute('r', (2.6 * massstab).toFixed(2));
-    for (const c of svg.querySelectorAll('.elr-kreis')) c.setAttribute('r', Math.min(12 * massstab, 12).toFixed(2));
-    for (const c of effekte.querySelectorAll('[data-r]')) c.setAttribute('r', (c.dataset.r * massstab).toFixed(2));
+    massstab = breitePx ? vb.w / breitePx : 1;
+    const rPunkt = (2.6 * massstab).toFixed(2);
+    const rKreis = Math.min(12 * massstab, 12).toFixed(2);
+    for (const c of hauptstadtPunkte) c.setAttribute('r', rPunkt);
+    for (const c of tippKreise) c.setAttribute('r', rKreis);
+    for (const c of effekte.children) c.setAttribute('r', (c.dataset.r * massstab).toFixed(2));
   }
 
   /** Ausschnitt so wählen, dass das Rechteck r = [x, y, w, h] vollständig sichtbar ist. */
@@ -128,15 +133,20 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     return Math.hypot(a.x - b.x, a.y - b.y) || 1;
   }
 
-  function zeigeVerschiebung(dx, dy, s = 1, ursprung = { x: 0, y: 0 }) {
-    svg.style.transformOrigin = `${ursprung.x}px ${ursprung.y}px`;
-    svg.style.transform = `translate(${dx}px, ${dy}px) scale(${s})`;
+  // Höchstens ein Neuzeichnen pro Bildschirmbild – immer mit der neuesten Fingerposition
+  let bildAnfrage = 0;
+  function zeichneBald() {
+    if (bildAnfrage) return;
+    bildAnfrage = requestAnimationFrame(() => {
+      bildAnfrage = 0;
+      if (geste?.ziel) setze(geste.ziel);
+    });
   }
 
   function beendeGeste() {
-    if (!geste || geste.art === 'tipp') return;
-    svg.style.transform = '';
-    if (geste.ziel) setze(geste.ziel);
+    cancelAnimationFrame(bildAnfrage);
+    bildAnfrage = 0;
+    if (geste && geste.art !== 'tipp' && geste.ziel) setze(geste.ziel);
   }
 
   svg.addEventListener('pointerdown', (e) => {
@@ -163,7 +173,6 @@ export function erzeugeKarte(el, { codes, onTipp }) {
       const minS = geste.vb0.w / Math.max(W, H / seitenverhaeltnis());
       const maxS = geste.vb0.w / MIN_BREITE;
       const s = Math.min(maxS, Math.max(minS, abstand() / geste.d0));
-      zeigeVerschiebung(m.x - geste.m0.x, m.y - geste.m0.y, s, { x: geste.m0.x - r0.left, y: geste.m0.y - r0.top });
       const w = geste.vb0.w / s;
       const h = geste.vb0.h / s;
       geste.ziel = {
@@ -171,6 +180,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
         y: geste.k0.y - ((m.y - r0.top) / r0.height) * h,
         w, h,
       };
+      zeichneBald();
       return;
     }
     if (geste.art === 'tipp' && Math.hypot(e.clientX - geste.start.x, e.clientY - geste.start.y) > TIPP_TOLERANZ) {
@@ -180,9 +190,9 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     if (geste.art === 'schieben') {
       const dx = e.clientX - geste.start.x;
       const dy = e.clientY - geste.start.y;
-      zeigeVerschiebung(dx, dy);
       const k = geste.vb0.w / geste.r0.width;
       geste.ziel = { ...geste.vb0, x: geste.vb0.x - dx * k, y: geste.vb0.y - dy * k };
+      zeichneBald();
     }
   });
 
@@ -243,8 +253,10 @@ export function erzeugeKarte(el, { codes, onTipp }) {
 
   // Erst wenn die Karte eine Größe hat, die Standardansicht „Europa“ einpassen
   let eingepasst = false;
-  const beobachter = new ResizeObserver(() => {
-    if (!svg.getBoundingClientRect().width) return;
+  const beobachter = new ResizeObserver(([eintrag]) => {
+    breitePx = eintrag.contentRect.width;
+    hoehePx = eintrag.contentRect.height;
+    if (!breitePx) return;
     if (!eingepasst) { eingepasst = true; setze(passend(KARTE.europa, 1)); } else setze(vb);
   });
   beobachter.observe(svg);
@@ -311,6 +323,7 @@ export function erzeugeKarte(el, { codes, onTipp }) {
     groesse(id) { const [, , w, h] = rahmenVon([id]); return Math.max(w, h); },
     aufraeumen() {
       cancelAnimationFrame(animation);
+      cancelAnimationFrame(bildAnfrage);
       beobachter.disconnect();
     },
   };
