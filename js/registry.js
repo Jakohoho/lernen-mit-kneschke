@@ -11,6 +11,7 @@
 import selfPronounsRace from '../content/games/klasse7-englisch-self-pronouns-race/manifest.js';
 import conditionalsRace from '../content/games/klasse8-englisch-conditionals-race/manifest.js';
 import reflexivesEachOther from '../content/games/klasse7-englisch-reflexives-each-other/manifest.js';
+import europaLaenderrallye from '../content/games/klasse6-geographie-europa-laenderrallye/manifest.js';
 
 /**
  * Alle registrierten Spiele (Manifeste) – auch deaktivierte!
@@ -22,6 +23,7 @@ export const SPIELE = [
   selfPronounsRace,
   conditionalsRace,
   reflexivesEachOther,
+  europaLaenderrallye,
 ];
 
 /**

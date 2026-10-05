@@ -82,3 +82,4 @@ Dann im Browser öffnen: `http://localhost:8000`
 | 🏁 Self-Pronouns Race | 7 | Englisch | Grammatik | 🔥 Hardcore-Modus (Antwort frei eintippen) |
 | 🏎️ Conditionals Race | 8 | Englisch | Grammatik | If-Sätze Typ 1/2/3, Satz-Pool (Felder wechseln), falsch = zurück · 🔥 Hardcore-Modus |
 | 🪞 Myself & Each Other Race | 7 | Englisch | Grammatik | Reflexivpronomen, reflexive Verben (ohne „sich") & each other · Satz-Pool, falsch = zurück · 🔥 Hardcore-Modus |
+| 🗺️ Europa Länderrallye | 6 | Geographie | Topographie | Stumme Europakarte (zoombar): Länder & Hauptstädte, Regionen, Schengen, Euro, EU ohne Euro · allein oder 2–4 Spieler · 🔥 Hardcore-Modus |
